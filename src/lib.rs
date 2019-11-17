@@ -1,3 +1,5 @@
+pub mod set01;
+
 #[cfg(test)]
 mod tests {
     #[test]
