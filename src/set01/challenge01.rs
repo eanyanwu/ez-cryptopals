@@ -1,6 +1,6 @@
-const START_ASCII_DIGIT: u8 = 48;
-const START_ASCII_UPALPHA: u8 = 65;
-const START_ASCII_LOALPHA: u8 = 97;
+pub const START_ASCII_DIGIT: u8 = 48;
+pub const START_ASCII_UPALPHA: u8 = 65;
+pub const START_ASCII_LOALPHA: u8 = 97;
 
 const START_BASE64_UPALPHA: u8 = 0;
 const START_BASE64_LOALPHA: u8 = 26;
@@ -21,7 +21,7 @@ pub fn ascii_hex_to_bytes(hex_text: &str) -> Vec<u8> {
     // 1st pass: Convert each hex digit to a u8 
     let first_pass = s.as_bytes()
             .iter()
-            .map(ascii_hex_to_byte)
+            .map(ascii_hex_to_tetrad)
             .collect::<Box<[u8]>>();
 
 
@@ -85,10 +85,10 @@ pub fn bytes_to_ascii_base64(bytes: &[u8]) -> String {
     String::from_utf8(base64_ascii_characters).unwrap()
 }
 
-/// Convert a single hexadecimal character into the number it stands for
+/// Convert a single hexadecimal character into the binary tetrad (4-bits) number it stands for
 /// The input is a `u8` because a hexadecimal character is valid ascii, which
 /// can be represented in a byte
-fn ascii_hex_to_byte(hex_char: &u8) -> u8 {
+fn ascii_hex_to_tetrad(hex_char: &u8) -> u8 {
     // Here, we could have manually mapped every single ascii hex character to its number
     // like so b'0' -> b'0', b'1' -> 1 ... b'a' -> 10
     // That would make for a lengthy method.
@@ -108,9 +108,9 @@ fn ascii_hex_to_byte(hex_char: &u8) -> u8 {
     }
 }
 
-/// Convert a number to its ascii base64 representation
-/// Due to how the base64 system works, the number only be 6-bits long
-/// The remaining two bits on the left must be set to zero. 
+/// Convert a number to its ascii base64 representation  
+/// Due to how the base64 system works, the number only be 6-bits long  
+/// The remaining two bits on the left must be set to zero.    
 /// 
 /// # Panics
 /// 
@@ -128,7 +128,7 @@ fn byte_to_ascii_base64(num: &u8) -> u8 {
 
 /// Convert hex to base64
 #[cfg(test)]
-pub mod challenge01 {
+pub mod test {
     use crate::set01::challenge01;
 
     /// Hexadecimal: a system for representing numbers  
@@ -152,19 +152,19 @@ pub mod challenge01 {
     }
 
     #[test]
-    pub fn test_ascii_hex_to_byte() {
-        assert_eq!(0, challenge01::ascii_hex_to_byte(&b'0'));
-        assert_eq!(9, challenge01::ascii_hex_to_byte(&b'9'));
+    fn test_ascii_hex_to_tetrad() {
+        assert_eq!(0, challenge01::ascii_hex_to_tetrad(&b'0'));
+        assert_eq!(9, challenge01::ascii_hex_to_tetrad(&b'9'));
 
-        assert_eq!(10, challenge01::ascii_hex_to_byte(&b'a'));
-        assert_eq!(10, challenge01::ascii_hex_to_byte(&b'A'));
+        assert_eq!(10, challenge01::ascii_hex_to_tetrad(&b'a'));
+        assert_eq!(10, challenge01::ascii_hex_to_tetrad(&b'A'));
 
-        assert_eq!(15, challenge01::ascii_hex_to_byte(&b'f'));
-        assert_eq!(15, challenge01::ascii_hex_to_byte(&b'F'));
+        assert_eq!(15, challenge01::ascii_hex_to_tetrad(&b'f'));
+        assert_eq!(15, challenge01::ascii_hex_to_tetrad(&b'F'));
     }
 
     #[test]
-    pub fn test_ascii_hex_to_bytes()
+    fn test_ascii_hex_to_bytes()
     {
         assert_eq!(vec![0x01,0x23,0x45,0x67,0x89], challenge01::ascii_hex_to_bytes("0123456789"));
         assert_eq!(vec![0xab,0xcd,0xef], challenge01::ascii_hex_to_bytes("abcdef"));
@@ -172,7 +172,7 @@ pub mod challenge01 {
     }
 
     #[test]
-    pub fn test_byte_to_ascii_base64() {
+    fn test_byte_to_ascii_base64() {
         assert_eq!(b'A', challenge01::byte_to_ascii_base64(&0));
         assert_eq!(b'Z', challenge01::byte_to_ascii_base64(&25));
 
@@ -187,7 +187,7 @@ pub mod challenge01 {
     }
 
     #[test]
-    pub fn test_bytes_to_ascii_base64() {
+    fn test_bytes_to_ascii_base64() {
         // Big thanks to wikipedia for these test cases :) 
         // https://en.wikipedia.org/wiki/Base64#Examples
         assert_eq!(String::from("TWFu"), challenge01::bytes_to_ascii_base64(&[b'M', b'a', b'n']));
