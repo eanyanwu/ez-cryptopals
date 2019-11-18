@@ -1,3 +1,12 @@
+//! # Convert hex to base64
+//! 
+//! Hexadecimal: a system for representing numbers  
+//! Base64: a group of ways to represent binary numbers as text  
+//! Both are ways of representing numbers. So the conversion involves two steps:  
+//! (a) Converting a hexadecimal text to its binary number representation  
+//! (b) Converting the binary number to its Base64 representation.  
+
+
 pub const START_ASCII_DIGIT: u8 = 48;
 pub const START_ASCII_UPALPHA: u8 = 65;
 pub const START_ASCII_LOALPHA: u8 = 97;
@@ -131,11 +140,7 @@ fn byte_to_ascii_base64(num: &u8) -> u8 {
 pub mod test {
     use crate::set01::challenge01;
 
-    /// Hexadecimal: a system for representing numbers  
-    /// Base64: a group of ways to represent binary numbers as text  
-    /// Both are ways of representing numbers. So the conversion involves two steps:  
-    /// (a) Converting a hexadecimal text to its binary number representation  
-    /// (b) Converting the binary number to its Base64 representation.  
+    /// Solution to the challenge
     pub fn convert_hex_to_base64() {
         let hex_input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         let expected_base_64_output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";

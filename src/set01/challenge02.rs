@@ -1,3 +1,17 @@
+//! # Fixed XOR
+//! 
+//! The "XOR" operator! It's symbol is: ^
+//! Here are the rules:  
+//! 0 ^ 0 = 0
+//! 0 ^ 1 = 1 
+//! 1 ^ 0 = 1
+//! 1 ^ 1 = 0
+//! In english: At least one of the sides must be the 1 bit  
+//! The inputs to this chellenge are two hexadecimal ascii strings.  
+//! So before we can do the XOR, we need to convert both to actual sequence of bytes.  
+//! Luckly, we have done this in the previous challenge!
+
+
 use crate::set01::challenge01;
 
 /// Xor to sequences of bytes together  
@@ -46,16 +60,7 @@ pub mod test {
     use crate::set01::challenge01;
     use crate::set01::challenge02;
 
-    /// The "XOR" operator! It's symbol is: ^
-    /// Here are the rules:  
-    /// 0 ^ 0 = 0
-    /// 0 ^ 1 = 1 
-    /// 1 ^ 0 = 1
-    /// 1 ^ 1 = 0
-    /// In english: At least one of the sides must be the 1 bit  
-    /// The inputs to this chellenge are two hexadecimal ascii strings.  
-    /// So before we can do the XOR, we need to convert both to actual sequence of bytes.  
-    /// Luckly, we have done this in the previous challenge!
+    /// Solution to the challenge
     pub fn fixed_xor() {
         let left_hand_side = "1c0111001f010100061a024b53535009181c";
         let right_hand_side = "686974207468652062756c6c277320657965";
