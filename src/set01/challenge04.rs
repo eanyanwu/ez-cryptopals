@@ -35,7 +35,7 @@ pub mod test {
 
         for line in reader.lines() {
             let line = line.unwrap();
-            let bytes = challenge01::ascii_hex_to_bytes(&line);
+            let bytes = challenge01::base16_to_bytes(&line);
 
             let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes);
 
