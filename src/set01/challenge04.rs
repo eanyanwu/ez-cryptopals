@@ -14,6 +14,7 @@
 
 
 /// Detect single-character XOR
+#[cfg(test)]
 pub mod test {
     use std::io;
     use std::io::prelude::*;
@@ -25,7 +26,7 @@ pub mod test {
 
     /// Solution to the challenge (see source)
     pub fn detect_single_character_xor() {
-        let path_to_file = path::PathBuf::from("./src/set01/detect_single_character_xor.txt");
+        let path_to_file = path::PathBuf::from("./src/set01/_detect_single_character_xor.txt");
 
         let f = fs::File::open(&path_to_file).expect("could not open the file");
 
@@ -35,6 +36,7 @@ pub mod test {
 
         for line in reader.lines() {
             let line = line.unwrap();
+
             let bytes = challenge01::base16_to_bytes(&line);
 
             let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes);
