@@ -51,10 +51,38 @@ pub fn edit_distance(lhs: &[u8], rhs: &[u8]) -> u32 {
 /// Break repeating-key XOR
 #[cfg(test)]
 pub mod test {
+    use std::fs;
+    use std::path;
+    use std::collections::HashMap;
+
+    use crate::radix;
     use crate::set01::challenge06;
 
     /// Solution to the challenge (see source)
     pub fn break_repeating_key_xor() {
+        
+        let contents = fs::read_to_string(path::PathBuf::from("./src/set01/_break_repeating_key_xor.txt")).expect("could not open the file");
+
+        // Get rid of the new lines
+        let contents = contents.replace("\n", "");
+
+        let bytes = radix::base64_to_bytes(&contents);
+
+        // 1st Step: Try to make a guess as to what the key size might be
+        let mut keysize_to_edit_distance_map = HashMap::new();
+        
+        // Using this range because that is what was suggested in the challenge
+        for keysize in 2..=40 {
+            let first_chunk = &bytes[0..keysize];
+            let second_chunk = &bytes[keysize..keysize * 2];
+
+            let ed = challenge06::edit_distance(first_chunk, second_chunk);
+            let normalized_ed = ed as f32 / keysize as f32;
+
+            keysize_to_edit_distance_map.insert(keysize, normalized_ed);
+        }
+
+        println!("{:?}", keysize_to_edit_distance_map);
     }
 
     #[test]

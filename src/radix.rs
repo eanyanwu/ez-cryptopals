@@ -175,7 +175,7 @@ fn base16_to_tetrad(base16_char: &u8) -> u8 {
         START_ASCII_LOALPHA..=102 => base16_char - START_ASCII_LOALPHA + 10, // uppercase
 
         // Huh??
-        _ => panic!("error: not a valid base16 character"),
+        _ => panic!("error: `base16_char` not a valid base16 character: {}", base16_char),
     }
 }
 
@@ -188,7 +188,7 @@ fn tetrad_to_base16(num: &u8) -> u8 {
     match num {
         0..=9 => START_ASCII_DIGIT + num,
         10..=15 => START_ASCII_LOALPHA + num - 10,
-        _ => panic!("error: {} is not a valid value that can be represented by one hexadecimal character", num),
+        _ => panic!("error: `num` is not a 4-bit number: {}", num),
     }
 }
 
@@ -206,7 +206,7 @@ fn base64_to_sextet(base64_char: &u8) -> u8 {
         43 => 62, // Plus Sign,
         47 => 63, // Forward slash
         61 => 61, // base64 strings will have a padding character which will be disposed off when decoding. 
-        _ => panic!("error: `base64_char` is not a valid base64 character"),
+        _ => panic!("error: `base64_char` is not a valid base64 character: {}", base64_char),
     }
 }
 
@@ -224,7 +224,7 @@ fn sextet_to_base64(num: &u8) -> u8 {
         52..=61 => START_ASCII_DIGIT + num - START_BASE64_DIGIT,
         62 => 43, // Plus sign
         63 =>  47, // Forward slash
-        _ => panic!("error: `num` is not a 6-bit number")
+        _ => panic!("error: `num` is not a 6-bit number: {}", num)
     }
 }
 
