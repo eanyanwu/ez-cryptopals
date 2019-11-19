@@ -52,6 +52,44 @@ impl EnglishAsciiScorer {
     }
 }
 
+pub struct SingleByteXorDecodeResult {
+    result: Vec<u8>,
+    score: u32
+}
+
+impl SingleByteXorDecodeResult {
+    pub fn new(score: u32, result: Vec<u8>) -> Self {
+        SingleByteXorDecodeResult{ score, result }
+    }
+
+    pub fn get_result(&self) -> &[u8] {
+        &self.result
+    }
+
+    pub fn get_score(&self) -> u32 {
+        self.score
+    }
+}
+
+/// Make a guess at what might be the original plain-text of the input 
+/// The guess is made by xoring every possible byte with the input,
+/// then picking the one that looks the most like English based on character frequency rules.
+pub fn decode_single_byte_xor(input: &[u8]) -> SingleByteXorDecodeResult {
+    let all_possible_xor_results = xor_with_every_possible_byte(input);
+
+    let mut best = (0, Vec::new());
+
+    for result in all_possible_xor_results {
+        let score = score_english_ascii_text(&result);
+
+        if score > best.0 {
+            best = (score, result);
+        }
+    }
+
+    SingleByteXorDecodeResult::new(best.0, best.1)
+}
+
 /// Grade a sequence of bytes  
 /// The higher the grade, the more likely this sequence corresponds to an english ascii text
 /// 
@@ -67,7 +105,7 @@ pub fn score_english_ascii_text(input: &[u8]) -> u32 {
 }
 
 /// Xor every possible single byte with the input and return all results
-pub fn brute_force_single_byte_xor(input: &[u8]) -> Vec<Vec<u8>> {
+pub fn xor_with_every_possible_byte(input: &[u8]) -> Vec<Vec<u8>> {
     let mut results = Vec::new();
 
     for byte in 0..=0b1111_1111 {
@@ -85,27 +123,17 @@ pub mod test {
     use crate::set01::challenge01;
     use crate::set01::challenge03;
 
-    /// Solution to the challenge
+    /// Solution to the challenge (see source)
     pub fn single_byte_xor_cipher() {
         let input_ascii_hex = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
         let bytes = challenge01::ascii_hex_to_bytes(input_ascii_hex);
 
-        let brute_force_result = challenge03::brute_force_single_byte_xor(&bytes);
-
-        let mut best_score = (0, Vec::new());
-
-        for attempt in brute_force_result {
-            let score = challenge03::score_english_ascii_text(&attempt);
-
-            if score > best_score.0 {
-                best_score = (score, attempt);
-            }
-        }
+        let best_guess = challenge03::decode_single_byte_xor(&bytes);
 
         assert_eq!(
             "Cooking MC's like a pound of bacon",
-            String::from_utf8(best_score.1).unwrap()
+            std::str::from_utf8(best_guess.get_result()).unwrap()
         );
     }
 

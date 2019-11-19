@@ -60,7 +60,7 @@ pub mod test {
     use crate::set01::challenge01;
     use crate::set01::challenge02;
 
-    /// Solution to the challenge
+    /// Solution to the challenge (see source)
     pub fn fixed_xor() {
         let left_hand_side = "1c0111001f010100061a024b53535009181c";
         let right_hand_side = "686974207468652062756c6c277320657965";
