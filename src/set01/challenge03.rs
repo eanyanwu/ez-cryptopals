@@ -120,14 +120,14 @@ pub fn xor_with_every_possible_byte(input: &[u8]) -> Vec<Vec<u8>> {
 /// Single-byte XOR cipher
 #[cfg(test)]
 pub mod test {
-    use crate::set01::challenge01;
+    use crate::radix;
     use crate::set01::challenge03;
 
     /// Solution to the challenge (see source)
     pub fn single_byte_xor_cipher() {
         let input_ascii_hex = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
 
-        let bytes = challenge01::base16_to_bytes(input_ascii_hex);
+        let bytes = radix::base16_to_bytes(input_ascii_hex);
 
         let best_guess = challenge03::decode_single_byte_xor(&bytes);
 

@@ -48,9 +48,6 @@ pub fn edit_distance(lhs: &[u8], rhs: &[u8]) -> u32 {
 }
 
 
-
-
-
 /// Break repeating-key XOR
 #[cfg(test)]
 pub mod test {

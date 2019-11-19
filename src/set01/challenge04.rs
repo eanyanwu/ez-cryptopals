@@ -21,7 +21,7 @@ pub mod test {
     use std::fs;
     use std::path;
 
-    use crate::set01::challenge01;
+    use crate::radix;
     use crate::set01::challenge03;
 
     /// Solution to the challenge (see source)
@@ -37,7 +37,7 @@ pub mod test {
         for line in reader.lines() {
             let line = line.unwrap();
 
-            let bytes = challenge01::base16_to_bytes(&line);
+            let bytes = radix::base16_to_bytes(&line);
 
             let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes);
 

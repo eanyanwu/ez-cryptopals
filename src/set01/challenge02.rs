@@ -31,7 +31,7 @@ pub fn xor_bytes(lhs: &[u8], rhs: &[u8]) -> Vec<u8> {
 
 /// Fixed XOR
 pub mod test {
-    use crate::set01::challenge01;
+    use crate::radix;
     use crate::set01::challenge02;
 
     /// Solution to the challenge (see source)
@@ -41,12 +41,12 @@ pub mod test {
 
         let expected_result = "746865206b696420646f6e277420706c6179";
 
-        let lhs_bytes = challenge01::base16_to_bytes(left_hand_side);
-        let rhs_bytes = challenge01::base16_to_bytes(right_hand_side);
+        let lhs_bytes = radix::base16_to_bytes(left_hand_side);
+        let rhs_bytes = radix::base16_to_bytes(right_hand_side);
 
         let xored_bytes = challenge02::xor_bytes(&lhs_bytes, &rhs_bytes);
         
-        assert_eq!(expected_result, challenge01::bytes_to_base16(&xored_bytes));
+        assert_eq!(expected_result, radix::bytes_to_base16(&xored_bytes));
 
     }
 
