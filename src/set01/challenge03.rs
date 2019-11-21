@@ -24,8 +24,14 @@ pub struct EnglishAsciiScorer<'a> {
 impl<'a> EnglishAsciiScorer<'a> {
     /// Create a new scorer
     pub fn new() -> Self {
+        // Using http://norvig.com/mayzner.html
+        // I also added the space character due to a bug where two plain text results scored the same
+        // One was a version of the other, but with a key difference of 32, somehow causing the letters to switch cases.
+        // The only other difference was that one version had spaces as expected, and the other didn't (it had symbols instead)
+        // So i'm making the hypothesis (backed by some random internet article) that the SPACE character is an imporant part of the language
+        // and more frequent than the e character
         EnglishAsciiScorer {
-            letter_ranking: "etaoinshrdlucmfwypvbgkjqxz".as_bytes(),
+            letter_ranking: " etaoinsrhldcumfpgwybvkxjqz".as_bytes(),
         }
     }
 
@@ -150,8 +156,8 @@ pub mod test {
         assert_eq!(21, scorer.score_ascii_byte(&b'n'));
         assert_eq!(21, scorer.score_ascii_byte(&b'N'));
 
-        assert_eq!(4, scorer.score_ascii_byte(&b'j'));
-        assert_eq!(4, scorer.score_ascii_byte(&b'J'));
+        assert_eq!(3, scorer.score_ascii_byte(&b'j'));
+        assert_eq!(3, scorer.score_ascii_byte(&b'J'));
 
         assert_eq!(1, scorer.score_ascii_byte(&b'z'));
         assert_eq!(1, scorer.score_ascii_byte(&b'Z'));

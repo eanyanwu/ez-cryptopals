@@ -113,10 +113,8 @@ pub mod test {
         
         edit_distance_map.sort_by(|p1, p2| p1.0.cmp(&p2.0));
 
-        println!("{:?}", edit_distance_map);
-
         // 2nd step
-        for potential_key_size in edit_distance_map.into_iter().take(3) {
+        for potential_key_size in edit_distance_map.into_iter().take(6) {
             let keysize = potential_key_size.1;
             
             let transposed_input = challenge06::count_off_and_partition(keysize, &bytes);
@@ -128,8 +126,6 @@ pub mod test {
                 key.push(guess.get_key());
             }
 
-            println!("ky--{:?}", &key);
-
             let repeating_key = challenge05::repeat(&key, bytes.len());
             let plain_text = challenge02::xor_bytes(&bytes, &repeating_key);
 
@@ -139,7 +135,6 @@ pub mod test {
     }
 
     #[test]
-    #[ignore]
     pub fn test_break_repeating_key_xor() {
         break_repeating_key_xor();
     }
