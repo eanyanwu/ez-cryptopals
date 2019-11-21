@@ -32,23 +32,27 @@ pub mod test {
 
         let reader = io::BufReader::new(f);
 
-        let mut best_guess = (0, Vec::new());
+        let mut best_guess = (0, 0, Vec::new());
 
-        for line in reader.lines() {
+        for (_, line) in reader.lines().enumerate() {
             let line = line.unwrap();
 
             let bytes = radix::base16_to_bytes(&line);
 
-            let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes);
+            let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes).remove(0);
 
             if brute_force_xor_result.get_score() > best_guess.0 {
-                best_guess = (brute_force_xor_result.get_score(), brute_force_xor_result.get_result().to_vec());
+                best_guess = (
+                    brute_force_xor_result.get_score(),
+                    brute_force_xor_result.get_key(), 
+                    brute_force_xor_result.get_result().to_vec()
+                );
             }
         }
-
+                
         assert_eq!(
             "Now that the party is jumping\n",
-            std::str::from_utf8(&best_guess.1).unwrap()
+            std::str::from_utf8(&best_guess.2).unwrap()
         );
     }
 
