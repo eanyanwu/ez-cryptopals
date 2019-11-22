@@ -114,9 +114,11 @@ pub mod test {
         edit_distance_map.sort_by(|p1, p2| p1.0.cmp(&p2.0));
 
         // 2nd step
-        for potential_key_size in edit_distance_map.into_iter().take(6) {
+        for potential_key_size in edit_distance_map.into_iter().take(3) {
             let keysize = potential_key_size.1;
-            
+
+            println!("Keysize: {}", keysize);
+
             let transposed_input = challenge06::count_off_and_partition(keysize, &bytes);
             
             
@@ -124,12 +126,20 @@ pub mod test {
             for i in 0..keysize {
                 let guess = challenge03::decode_single_byte_xor(&transposed_input[i as usize]).remove(0);
                 key.push(guess.get_key());
+                println!("Key # {}. Score: {}", i, guess.get_score());
             }
 
-            let repeating_key = challenge05::repeat(&key, bytes.len());
-            let plain_text = challenge02::xor_bytes(&bytes, &repeating_key);
+            println!("Key: {:?}", key);
 
-            std::fs::write(format!("key{}.txt", keysize), std::str::from_utf8(&plain_text).unwrap()).unwrap();
+            let repeating_key = challenge05::repeat(&key, bytes.len());
+            let result = challenge02::xor_bytes(&bytes, &repeating_key);
+
+            match std::str::from_utf8(&result) {
+                Ok(t) => std::fs::write(format!("key{}.txt", keysize), t).unwrap(),
+                Err(_) => std::fs::write(format!("key{}.txt", keysize), "not valid utf8").unwrap(),
+            }
+
+            ;
         }
 
     }
