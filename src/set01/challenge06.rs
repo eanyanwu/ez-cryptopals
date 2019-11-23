@@ -16,6 +16,9 @@
 //! The hard part is guessing the key. The challenge suggests that we can do so by comparing the edit distance between 2 KEYSIZE_GUESS blocks. The guess 
 //! with the lowest disstance is probably the key. This _kinda_ makes sense in a vague sort of way. If two blocks were XORed by the same key, their edit
 //! distance would be lower than if the were not? It's not intuitive, but I _could_ see how that is the case...maybe
+//! 
+//! Note: Turns out the challenge was a bit misleading about how many KEYSIZE chunks you might need to use to take a good guess at the key
+//! 2 and 4 are not enough ~ go higher!
 
 
 use crate::set01::challenge02;
@@ -82,7 +85,6 @@ pub mod test {
 
     /// Solution to the challenge (see source)
     pub fn break_repeating_key_xor() {
-        
         let contents = fs::read_to_string(path::PathBuf::from("./src/set01/_break_repeating_key_xor.txt")).expect("could not open the file");
 
         // Get rid of the new lines
@@ -97,50 +99,69 @@ pub mod test {
 
         let mut edit_distance_map = vec![(0,0); max_keysize as usize - min_keysize as usize + 1];
         
-        // Using this range because that is what was suggested in the challenge
         for keysize in min_keysize..=max_keysize {
-            let first_chunk = &bytes[0..keysize as usize];
-            let second_chunk = &bytes[keysize as usize..keysize as usize * 2];
+            // The wording of the challenge is prettty misleaing,
+            // I ended up using the averaging technique (which seemed suggested as an afterthought)
+            // and also averaging across more than 4 blocks to get a better guess
+            let mut edit_distances = Vec::new();
 
-            let ed = challenge06::edit_distance(first_chunk, second_chunk);
+            let chunks_start: u32 = 0;
+            let chunks_end: u32 = 10;
+
+            for i in chunks_start..chunks_end {
+                let first_chunk_start = (i * keysize) as usize;
+                let first_chunk_end = ((i + 1) * keysize) as usize;
+                let second_chunk_start = ((i + 1) * keysize) as usize;
+                let second_chunk_end = ((i + 2) * keysize) as usize;
+
+                let first_chunk = &bytes[first_chunk_start..first_chunk_end];
+                let second_chunk = &bytes[second_chunk_start..second_chunk_end];
+
+                edit_distances.push(challenge06::edit_distance(first_chunk, second_chunk));
+            }
+
+            let sum_edit_distances: u32 = edit_distances.iter().sum();
 
             // Multiplying the edit distance by a 1000 in order to avoid figuring out floating-point math
             // This should be ok as I don't need the exact numbers, only the relative ordering.
-            let normalized_ed = ed * 1000 / keysize;
+            let average_edit_distance = sum_edit_distances * 1000 / chunks_end / keysize;
 
-            edit_distance_map[keysize as usize - min_keysize as usize] = (normalized_ed, keysize);
+            edit_distance_map[keysize as usize - min_keysize as usize] = (average_edit_distance, keysize);
         }
         
         edit_distance_map.sort_by(|p1, p2| p1.0.cmp(&p2.0));
 
-        // 2nd step
-        for potential_key_size in edit_distance_map.into_iter().take(3) {
-            let keysize = potential_key_size.1;
+        // 2nd step: Break the repeating key xor.
+        // One way to do this is to take our keysize guess and use it to break up the cipher text
+        // into chunks that would have been encrypted by the same byte
+        let mut potential_plain_text = Vec::new();
 
-            println!("Keysize: {}", keysize);
+        for key_size_guess in edit_distance_map.into_iter().take(3) {
+            let keysize = key_size_guess.1;
 
             let transposed_input = challenge06::count_off_and_partition(keysize, &bytes);
-            
             
             let mut key = Vec::new();
             for i in 0..keysize {
                 let guess = challenge03::decode_single_byte_xor(&transposed_input[i as usize]).remove(0);
                 key.push(guess.get_key());
-                println!("Key # {}. Score: {}", i, guess.get_score());
             }
-
-            println!("Key: {:?}", key);
 
             let repeating_key = challenge05::repeat(&key, bytes.len());
             let result = challenge02::xor_bytes(&bytes, &repeating_key);
 
-            match std::str::from_utf8(&result) {
-                Ok(t) => std::fs::write(format!("key{}.txt", keysize), t).unwrap(),
-                Err(_) => std::fs::write(format!("key{}.txt", keysize), "not valid utf8").unwrap(),
+            match String::from_utf8(result) {
+                Ok(t) => potential_plain_text.push(t),
+                Err(_) => potential_plain_text.push(String::from("not valid utf8")),
             }
-
-            ;
         }
+
+        assert!(
+            potential_plain_text.iter()
+                                .any(|text| { 
+                                    text.contains("I'm back and I'm ringin' the bell")
+                                })
+        );
 
     }
 

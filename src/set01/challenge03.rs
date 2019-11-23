@@ -17,105 +17,17 @@ use std::collections::HashMap;
 
 use crate::set01::challenge02;
 
-pub struct EnglishAsciiScorer {
-    bigram_ranking: HashMap<String, i32>,
-    letter_ranking: HashMap<u8, i32>
+pub struct EnglishAsciiScorer<'a> {
+    char_ranking: &'a [u8],
 }
 
-impl EnglishAsciiScorer {
+impl<'a> EnglishAsciiScorer<'a> {
     /// Create a new scorer
     pub fn new() -> Self {
         // Using http://norvig.com/mayzner.html
        
         EnglishAsciiScorer {
-            bigram_ranking: [
-                (String::from("TH"), 356),
-                (String::from("HE"), 307),
-                (String::from("IN"), 243),
-                (String::from("ER"), 205),
-                (String::from("AN"), 199),
-                (String::from("RE"), 185),
-                (String::from("ON"), 176),
-                (String::from("AT"), 149),
-                (String::from("EN"), 145),
-                (String::from("ND"), 135),
-                (String::from("TI"), 134),
-                (String::from("ES"), 134),
-                (String::from("OR"), 128),
-                (String::from("TE"), 120),
-                (String::from("OF"), 117),
-                (String::from("ED"), 117),
-                (String::from("IS"), 113),
-                (String::from("IT"), 112),
-                (String::from("AL"), 109),
-                (String::from("AR"), 107),
-                (String::from("ST"), 105),
-                (String::from("TO"), 104),
-                (String::from("NT"), 104),
-                (String::from("NG"), 095),
-                (String::from("SE"), 093),
-                (String::from("HA"), 093),
-                (String::from("AS"), 087),
-                (String::from("OU"), 087),
-                (String::from("IO"), 083),
-                (String::from("LE"), 083),
-                (String::from("VE"), 083),
-                (String::from("CO"), 079),
-                (String::from("ME"), 079),
-                (String::from("DE"), 076),
-                (String::from("HI"), 076),
-                (String::from("RI"), 073),
-                (String::from("RO"), 073),
-                (String::from("IC"), 070),
-                (String::from("NE"), 069),
-                (String::from("EA"), 069),
-                (String::from("RA"), 069),
-                (String::from("CE"), 065),
-                (String::from("LI"), 062),
-                (String::from("CH"), 060),
-                (String::from("LL"), 058),
-                (String::from("BE"), 058),
-                (String::from("MA"), 057),
-                (String::from("SI"), 055),
-                (String::from("OM"), 055),
-                (String::from("UR"), 054),
-            ].iter()
-            .cloned()
-            .collect(),
-
-            letter_ranking: [
-                (b' ',1300),
-                (b'E',1249),
-                (b'T', 928),
-                (b'A', 804),
-                (b'O', 764),
-                (b'I', 757),
-                (b'N', 723),
-                (b'S', 651),
-                (b'R', 628),
-                (b'H', 505),
-                (b'L', 407),
-                (b'D', 382),
-                (b'C', 334),
-                (b'U', 273),
-                (b'M', 251),
-                (b'F', 240),
-                (b'P', 214),
-                (b'G', 187),
-                (b'W', 168),
-                (b'Y', 166),
-                (b'B', 148),
-                (b'V', 105),
-                (b'K', 054),
-                (b'X', 023),
-                (b'J', 016),
-                (b'Q', 012),
-                (b'Z', 009),
-                (b'.', 0),
-                (b',', 0),
-            ].iter()
-            .cloned()
-            .collect()
+            char_ranking: " etaoinsrhldcumfpgwybvkxjqz".as_bytes(),
         }
     }
 
@@ -125,37 +37,25 @@ impl EnglishAsciiScorer {
     /// This grading is done using the approximate order of frequency of the 12 most commonly used 
     /// letters in the English language.
     pub fn score_ascii_text(&self, input: &[u8]) -> i32 {
-        let mut sum = 0;
-
-        for (bigram, score) in self.bigram_ranking.iter() {
-            let bigram_bytes = bigram.as_bytes();
-
-            let mut position = Some(0);
-
-            while position != None {
-                position = index_of(&input.to_ascii_uppercase(), bigram_bytes, position.unwrap() + 1);
-
-                if position.is_some() {
-                    sum += score
-                }
-            }
-
-        }
-
-        sum 
+        input.iter()
+            .map(|byte| self.score_ascii_byte(byte))
+            .sum()
     }
 
     /// Score a single ascii byte based on the weights provided
     fn score_ascii_byte(&self, byte: &u8) -> i32 {
-        let byte = byte.to_ascii_uppercase();
+        let byte = byte.to_ascii_lowercase();
 
-        // valid letter ~ reward
-        if self.letter_ranking.contains_key(&byte) {
-            self.letter_ranking[&byte]
+        for (index, letter) in self.char_ranking.iter().enumerate() {
+            if letter == &byte {
+                // Phew seems like a dangerous cast?
+                // Not to worry: The length of the letter ranking slice will not be larger than a u8 because 
+                // there are not enough letters in the alphabet.
+                return (self.char_ranking.len() - index) as i32
+            }
         }
-        else {
-            -300
-        }
+
+        -1
     }
 }
 
@@ -289,11 +189,11 @@ pub mod test {
     pub fn test_scorer() {
         let scorer = challenge03::EnglishAsciiScorer::new();
 
-        assert_eq!(1249, scorer.score_ascii_byte(&b'e'));
-        assert_eq!(1249, scorer.score_ascii_byte(&b'E'));
+        assert_eq!(26, scorer.score_ascii_byte(&b'e'));
+        assert_eq!(26, scorer.score_ascii_byte(&b'E'));
        
-        assert_eq!(9, scorer.score_ascii_byte(&b'z'));
-        assert_eq!(9, scorer.score_ascii_byte(&b'Z'));
+        assert_eq!(1, scorer.score_ascii_byte(&b'z'));
+        assert_eq!(1, scorer.score_ascii_byte(&b'Z'));
 
         assert!(scorer.score_ascii_byte(&b')') < 0);
     }
@@ -311,7 +211,5 @@ pub mod test {
 
         // Two matches, but we get the second because we specify a start index after the first
         assert_eq!(Some(6), challenge03::index_of(&[1,2,3,4,1,2,3,4], &[3,4], 4));
-
-
     }
 }
