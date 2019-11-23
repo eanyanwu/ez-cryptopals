@@ -1,17 +1,20 @@
 //! # Single-byte XOR cipher
 //! 
-//! The XOR operation preserves byte frequency.  
-//! Say a sequence of bytes had 10 occurences of the byte 0b0000_1111  
-//! If I XOR each byte in that sequence with the byte 0b1111_1111  
-//! we will end up with a sequence that has 10 occurencs of the byte 0b1111_0000  
+//! The XOR operation is deterministic. This means that given two bytes, XORing
+//! them together will _always_ give the same result.
 //! 
-//! The XOR operation is also reversible.   
-//! Say you have the byte 0b0000_1111 and you xor it with 0b1111_1111, you get 0b1111_0000  
-//! If you XOR it again with 0b1111_1111, you'll get your original byte 0b0000_1111!  
+//! In a single-byte XOR cipher, all the bytes are being XORed by the same key.
+//! This means that a given plain-text byte will always result in the same 
+//! cipher-text byte.
 //! 
-//! A straightforward way to figure out what the original text was is to
-//! (a) xor every possible byte with our input string. This will give us every possible original string.
-//! (b) score all our strings based on character frequency and choose the one that is most likely to be english
+//! Since the english language has a certain letter frequency, it is possible 
+//! to automagically figure out if a block of text _probably_ contains english
+//! 
+//! So! A straightforward way to figure out what the original text was is to
+//! (a) XOR every possible byte with our input string. This will give us every
+//! possible original string.
+//! (b) score all our strings based on character frequency and choose the one 
+//! that is most likely to be english
 
 use std::collections::HashMap;
 
@@ -115,51 +118,6 @@ pub fn decode_single_byte_xor(input: &[u8]) -> Vec<SingleByteXorDecodeResult> {
     scores
 }
 
-/// Finds the next occurence of `pattern` in `slice` after `start_index`
-/// 
-/// # Panics
-/// 
-/// Will panic if `pattern` is longer than `slice`
-/// Will panic if `start_index` is not a valid index of `slice`
-pub fn index_of(slice: &[u8], pattern: &[u8], start_index: usize) -> Option<usize> {
-    if pattern.len() > slice.len() {
-        panic!("error: pattern (len {}) is longer than slice (len {}", pattern.len(), slice.len());
-    }
-
-    if start_index >= slice.len() {
-        panic!("error: start_index {} is not valid index into the slice of length {}", start_index, slice.len());
-    }
-
-    let mut slice_index = start_index;
-    let mut pattern_index = 0;
-
-    while slice_index < slice.len() {
-        while slice[slice_index] == pattern[pattern_index] {
-            // If we get to the end of the pattern, we have matched!
-            if pattern_index == pattern.len() - 1 {
-                // We found the pattern 
-                return Some(slice_index - pattern_index);
-            }
-
-            // If we get to the end of the slice, we have not matched :/ 
-            if slice_index == slice.len() - 1 {
-                slice_index -= pattern_index;
-                pattern_index = 0;
-
-                break;
-            }
-
-            slice_index += 1;
-            pattern_index += 1;
-        }
-
-        slice_index += 1;
-    }
-
-    None
-}
-
-
 /// Single-byte XOR cipher
 #[cfg(test)]
 pub mod test {
@@ -196,20 +154,5 @@ pub mod test {
         assert_eq!(1, scorer.score_ascii_byte(&b'Z'));
 
         assert!(scorer.score_ascii_byte(&b')') < 0);
-    }
-
-    #[test]
-    pub fn test_index_of() {
-        // Normal match
-        assert_eq!(Some(1), challenge03::index_of(&[1,2,3,4,5,6], &[2,3,4], 0));
-
-        // Match that almost gets to the end then fails
-        assert_eq!(None, challenge03::index_of(&[1,2,3,4,2,4], &[2,3,4,5], 0));
-
-        // Almost matches, the first time, then matches the second time.
-        assert_eq!(Some(5), challenge03::index_of(&[1,2,3,4,1,3,4,5], &[3,4,5], 0));
-
-        // Two matches, but we get the second because we specify a start index after the first
-        assert_eq!(Some(6), challenge03::index_of(&[1,2,3,4,1,2,3,4], &[3,4], 4));
     }
 }

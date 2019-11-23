@@ -6,13 +6,12 @@
 //! 0 ^ 1 = 1     
 //! 1 ^ 0 = 1  
 //! 1 ^ 1 = 0  
-//! In english: At least one of the sides must be the 1 bit    
-//! The inputs to this chellenge are two hexadecimal ascii strings.  
-//! So before we can do the XOR, we need to convert both to actual sequence of bytes.  
-//! Luckly, we have done this in the previous challenge!
+//! 
+//! In english: The result is a 1 if the two sides are different. It is a 0
+//! otherwise.
 
 
-/// Xor to sequences of bytes together  
+/// Xor two sequences of bytes together  
 /// 
 /// Panics
 /// 

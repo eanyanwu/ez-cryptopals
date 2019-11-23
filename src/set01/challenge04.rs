@@ -1,16 +1,19 @@
 //! Detect single-character XOR
 //! 
 //! For this challenge, we are given a text file with multiple lines.
-//! Each line is a hexadecimal string, and according to the prompt, one of the strings
-//! is actually cipher text that has been created by XORing some text with one character.
+//! Each line is a hexadecimal string, and according to the prompt, one of the 
+//! strings is actually cipher text that has been created by XORing some text 
+//! with one character.
+//! 
 //! We are to find it.
 //! 
-//! We could assume each line was XORed and use the solution to challenge03 on all of them.
-//! This will give us the most probable english sentence per line ~ with a score.
-//! The highest scoring sentence across all the lines would be the most probably english sentence of them all?
-//! 
-//! Seems very naive...but who am i to say. There is probably some really clever way to do this
-//! that I am not seeing
+//! We could assume each line was XORed and use the solution to challenge03 on 
+//! all of them.  
+//! This will give us the most probable english sentence per line ~ with a 
+//! score.  
+//! The highest scoring sentence across all the lines would be the most 
+//! probably english sentence of them all?
+
 
 
 /// Detect single-character XOR

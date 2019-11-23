@@ -1,6 +1,7 @@
 //! Radix Conversions
 //! 
-//! After getting to a point in the cryptopals challenges, one realizes these are used very frequently
+//! After getting to a point in the cryptopals challenges, one realizes these 
+//! are used very frequently
 //! So I have gathered them all in this here module for ease of use/organization
 
 pub const START_ASCII_DIGIT: u8 = 48;
