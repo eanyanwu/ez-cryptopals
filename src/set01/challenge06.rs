@@ -1,4 +1,4 @@
-//! Break repeating-key XOR
+//! # Break repeating-key XOR
 //!
 //! This one is actually reeeallly interesting and, dare I say it? FUN?
 //! 
@@ -85,7 +85,11 @@ pub mod test {
 
     /// Solution to the challenge (see source)
     pub fn break_repeating_key_xor() {
-        let contents = fs::read_to_string(path::PathBuf::from("./src/set01/_break_repeating_key_xor.txt")).expect("could not open the file");
+        let contents = fs::read_to_string(
+            path::PathBuf::from(
+                "./src/set01/input/_break_repeating_key_xor.txt")
+            )
+            .expect("could not open the file");
 
         // Get rid of the new lines
         let contents = contents.replace("\r\n", "");

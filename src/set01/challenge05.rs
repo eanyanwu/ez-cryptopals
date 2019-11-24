@@ -1,4 +1,4 @@
-//! Implement repeating-key XOR
+//! # Implement repeating-key XOR
 //! 
 //! Given the way I implemented the normal fixed byte xor, this one is easy.
 //! I simply need to create a sequence of bytes by repeating the key as many times as needed

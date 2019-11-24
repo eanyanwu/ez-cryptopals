@@ -1,4 +1,4 @@
-//! Detect single-character XOR
+//! # Detect single-character XOR
 //! 
 //! For this challenge, we are given a text file with multiple lines.
 //! Each line is a hexadecimal string, and according to the prompt, one of the 
@@ -29,7 +29,9 @@ pub mod test {
 
     /// Solution to the challenge (see source)
     pub fn detect_single_character_xor() {
-        let path_to_file = path::PathBuf::from("./src/set01/_detect_single_character_xor.txt");
+        let path_to_file = path::PathBuf::from(
+            "./src/set01/input/_detect_single_character_xor.txt"
+        );
 
         let f = fs::File::open(&path_to_file).expect("could not open the file");
 
