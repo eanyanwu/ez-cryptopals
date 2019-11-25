@@ -147,7 +147,7 @@ pub mod test {
             
             let mut key = Vec::new();
             for i in 0..keysize {
-                let guess = challenge03::decode_single_byte_xor(&transposed_input[i as usize]).remove(0);
+                let guess = challenge03::break_single_byte_xor(&transposed_input[i as usize]).remove(0);
                 key.push(guess.get_key());
             }
 

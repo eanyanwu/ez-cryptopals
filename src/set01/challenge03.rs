@@ -16,8 +16,6 @@
 //! (b) score all our strings based on character frequency and choose the one 
 //! that is most likely to be english
 
-use std::collections::HashMap;
-
 use crate::set01::challenge02;
 
 pub struct EnglishAsciiScorer<'a> {
@@ -62,15 +60,15 @@ impl<'a> EnglishAsciiScorer<'a> {
     }
 }
 
-pub struct SingleByteXorDecodeResult {
+pub struct SingleByteXorDecryptionAttempt {
     key: u8,
     result: Vec<u8>,
     score: i32
 }
 
-impl SingleByteXorDecodeResult {
+impl SingleByteXorDecryptionAttempt {
     pub fn new(score: i32, key: u8, result: &[u8]) -> Self {
-        SingleByteXorDecodeResult{ score, key,  result: result.to_vec() }
+        SingleByteXorDecryptionAttempt{ score, key,  result: result.to_vec() }
     }
 
     pub fn get_key(&self) -> u8 {
@@ -86,31 +84,37 @@ impl SingleByteXorDecodeResult {
     }
 }
 
-/// Try to decode a single-xor cipher by brute force (i.e xoring every possible byte with the input)
-/// The results are returned, sorted by a scoring "algorithm"
-/// The algorithm scores a piece of text higher depending on how much it "looks like English" based on 
-/// character frequency rules.
-pub fn decode_single_byte_xor(input: &[u8]) -> Vec<SingleByteXorDecodeResult> {
-    // Xor with every possible byte
-    let mut all_possible_xor_results = HashMap::new();
-
-     for byte in 0..=255 {
-        // We use the xor_bytes function from the previous challenge.
-        // Since we are only xoring one byte, we can just repeat it for the length of the input 
-        all_possible_xor_results.insert(byte, challenge02::xor_bytes(input, &vec![byte; input.len()]));
-    }
-
+/// Try to break a single-xor cipher by brute force (i.e xoring every possible
+/// byte with the input)  
+/// 
+/// The results are returned, sorted by a scoring "algorithm".  
+/// The algorithm scores a piece of text higher depending on how much it "looks 
+/// like English" based on character frequency rules.
+pub fn break_single_byte_xor(input: &[u8]) -> 
+Vec<SingleByteXorDecryptionAttempt>
+{
     let scorer = EnglishAsciiScorer::new();
 
     let mut scores = Vec::new();
 
-    for (key, result) in all_possible_xor_results.iter() {
-        scores.push(
-            SingleByteXorDecodeResult::new(
-                scorer.score_ascii_text(result), 
-                key.clone(), 
-                result));
+    // Xor with every possible byte
+     for byte in 0..=255 {
+        // We use the xor_bytes function from the previous challenge.
+        // Since we are only xoring one byte, we can just repeat it for the length of the input 
+        let plain_text_bytes = challenge02::xor_bytes(
+            input, 
+            &vec![byte; input.len()]
+        );
+
+        let score = scorer.score_ascii_text(&plain_text_bytes);
+
+        scores.push(SingleByteXorDecryptionAttempt::new(
+            score,
+            byte,
+            &plain_text_bytes
+        ));
     }
+
 
     // Sort the results from best score to worst
     scores.sort_by(|a, b| b.score.cmp(&a.score));
@@ -130,7 +134,7 @@ pub mod test {
 
         let bytes = radix::base16_to_bytes(input_ascii_hex);
 
-        let best_guess = challenge03::decode_single_byte_xor(&bytes).remove(0);
+        let best_guess = challenge03::break_single_byte_xor(&bytes).remove(0);
 
         assert_eq!(
             "Cooking MC's like a pound of bacon",

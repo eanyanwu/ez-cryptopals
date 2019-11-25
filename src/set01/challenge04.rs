@@ -44,7 +44,7 @@ pub mod test {
 
             let bytes = radix::base16_to_bytes(&line);
 
-            let brute_force_xor_result = challenge03::decode_single_byte_xor(&bytes).remove(0);
+            let brute_force_xor_result = challenge03::break_single_byte_xor(&bytes).remove(0);
 
             if brute_force_xor_result.get_score() > best_guess.0 {
                 best_guess = (
