@@ -5,5 +5,9 @@
 - Practice documentation!
 - Security!
 
+## Dependencies
+
+- OpenSSl
+
 
 
