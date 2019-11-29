@@ -1,21 +1,17 @@
 //! # AES in ECB mode
 
 
-
 /// AES in ECB mode
 #[cfg(test)]
 pub mod tests {
     use crate::radix;
-
-    use openssl::symm;
+    use crate::aes128;
 
     use std::fs;
     use std::path;
 
     /// Solution to the challenge (see source)
     pub fn aes_in_ecb_mode() {
-        let key = "YELLOW SUBMARINE";
-
         let cipher_text = fs::read_to_string(
             path::PathBuf::from("./src/set01/input/_aes_in_ecb_mode.txt")
         ).expect("could not open file");
@@ -26,14 +22,10 @@ pub mod tests {
 
         let cipher_text_bytes = radix::base64_to_bytes(&cipher_text);
 
-        let cipher = symm::Cipher::aes_128_ecb();
 
-        let plain_text_bytes = symm::decrypt(
-            cipher, 
-            key.as_bytes(),
-            None,
-            &cipher_text_bytes
-        ).expect("unable to decrypt");
+        let plain_text_bytes = aes128::ecb_decrypt(
+            b"YELLOW SUBMARINE",
+            &cipher_text_bytes);
 
         let plain_text = String::from_utf8(plain_text_bytes).unwrap();
 

@@ -1,25 +1,13 @@
 //! # Detect AES in ECB mode
 //! 
-//! Unfortunately, the wording in this is too similar to challenge04, 
-//! which makes it seem like you need to actually figure out what the key is.
+//! Though ECB is the "default" mode of AES, it is also the least secure.  
+//! Because no additional transformations are made on the plain text apart from 
+//! encrypting it, identical plain texts will be encrypted to identical cipher 
+//! texts. This is bad because patterns in the plain text could still appear 
+//! in the cipher text. 
 //! 
-//! I tried doing this, then realized my mistake. The AES cipher we are using
-//! uses a 128-bit key. It would take _some time_ for my laptop to brute force 
-//! that. 
-//! 
-//! Since I managed to solve challenge06, I didn't feel bad looking at other 
-//! people's solutions to this challenge...and I'm glad I did.
-//! 
-//! Apprently, others are just detecting if ECB was used for the cipher. No one
-//! is attempting to find the 128-bit key...
-//! 
-//! In retrospect...this makes sense. It would be odd if the creators of this
-//! challenges expected me to break a mode of the Advanced Encryption Standard
-//! at this point. 
-//! 
-//! However, I do wish it was worded a bit better. I sent an email to the 
-//! Cryptography Services group. We'll see what comes of it.
-
+//! For this challenge, we detect if the cipher-text was created using ECB by 
+//! looking for the cipher text with the most identical blocks within it.
 
 
 /// Detect AES in ECB mode
