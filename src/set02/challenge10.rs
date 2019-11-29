@@ -1,10 +1,4 @@
 //! # Implement CBC mode
-//! 
-//! I have already seen one mode of operation before, ECB
-//! Here I am to implement a second (and better) one: CBC (Cipher Block 
-//! Chaining)
-
-
 
 
 /// Implement CBC mode
@@ -13,6 +7,7 @@ pub mod test {
     use std::fs;
     use std::path::PathBuf;
 
+    use crate::radix;
     use crate::aes128;
 
     /// Solution to the challenge (see source)
@@ -21,18 +16,25 @@ pub mod test {
             PathBuf::from("./src/set02/input/_implement_cbc_mode.txt")
         ).expect("could not read file");
 
-        let content_bytes = contents.as_bytes().to_vec();
+        // remove new lines
+        let contents = contents.replace("\n", "");
+        let contents = contents.replace("\r\n", "");
+
+        let content_bytes = radix::base64_to_bytes(
+            &contents
+        );
 
         let plain_text = aes128::cbc_decrypt(
             b"YELLOW SUBMARINE",
             &[0; 16], 
             &content_bytes);
 
-            unsafe {
-                println!(
-                    "{}", 
-                    std::str::from_utf8_unchecked(&plain_text));
-            }
+        assert!(
+            std::str::from_utf8(
+                &plain_text
+            ).unwrap()
+            .starts_with("I'm back and I'm ringin' the bell")
+        );
         
     }
 

@@ -7,10 +7,20 @@
 //! construct the subsequent blocks in a hopefully still secure manner.  
 //! This _layered_ algorithm is called the cipher's _mode of operation_
 //! 
+//! ## ECB
+//! 
 //! ECB is one such mode of operation. It stands for Electronic Code Book.
 //! Calling it a "mode of operation" is actually not helpful. ECB just uses the 
 //! AES algorithm to decrypt/encrypt for every block that is fed to it. Nothing 
 //! fancy is done.
+//! 
+//! # CBC
+//! 
+//! CBC is another mode of operation. It stands for Cipher Block Chaining.
+//! Contrary to ECB, CBC actually does stuff to the input apart from feeding it
+//! through the block cipher. More specifically, it XORs the previous block 
+//! of cipher text with the current block of plain text, hence the "Chain" part
+//! of its name
 
 
 
@@ -42,24 +52,16 @@ pub fn cbc_encrypt(
 
     let mut cipher_text: Vec<[u8; 16]> = Vec::new();
 
+    let mut prev_cipher_text = init_vector.clone();
+
     for block in (&msg[..]).chunks(BLOCK_SIZE) {
         // Create an 'intermediate block' that is the result of XORing the
         // previous encrypted block with the current plain-text block.
         // In the case of the first block, we use the initialization vector
         // as a a fake "previous encrypted block"
-        let intermediate_block = if cipher_text.is_empty()
-        {
-            challenge02::xor_bytes(
-                init_vector,
-                block
-                )
-        }
-        else {
-            challenge02::xor_bytes(
-                cipher_text.last().unwrap(),
-                block
-            )
-        };
+        let intermediate_block = challenge02::xor_bytes(
+            &prev_cipher_text, 
+            block);
 
         // encrypt the "intermediate block"
         let cipher_text_block = encrypt_block(
@@ -67,9 +69,11 @@ pub fn cbc_encrypt(
             &<[u8; 16]>::try_from(&intermediate_block[..]).unwrap()
         );
 
+        // The current cipher text block will be XORed against the next plain
+        // text block
+        prev_cipher_text = cipher_text_block.clone();
 
         cipher_text.push(cipher_text_block);
-
     }
 
     cipher_text.iter()
@@ -93,7 +97,7 @@ pub fn cbc_decrypt(
         let block = <[u8; 16]>::try_from(&block[..]).unwrap();
 
         // Decrypt!
-        let intermediate_block = encrypt_block(
+        let intermediate_block = decrypt_block(
             key,
             &block
         );
@@ -109,9 +113,15 @@ pub fn cbc_decrypt(
         plain_text.push(plain_text_block);
     }
 
-    plain_text.into_iter()
-                .flatten()
-                .collect::<Vec<u8>>()
+    let mut plain_text = plain_text.into_iter()
+                                    .flatten()
+                                    .collect::<Vec<u8>>();
+
+    // Remove padding that was added
+    
+    pkcs_unpad(BLOCK_SIZE as u8, &mut plain_text);
+
+    plain_text    
 }
 
 
@@ -312,6 +322,41 @@ pub fn decrypt_block(
 pub mod test {
     use crate::aes128;
     use crate::radix;
+
+    #[test]
+    pub fn test_cbc_encrypt_then_decrypt() {
+        let input = b"YELLOW SUBMARINE";
+        let key = b"YELLOW SUBMARINE";
+
+        let cipher_text = aes128::cbc_encrypt(
+            key,
+            &[0; 16],
+            input
+        );
+
+        // notice that because of padding, the cipher text is longer than the 
+        // input
+        assert_eq!(32, cipher_text.len());
+
+        assert_eq!(
+            "0apPZXiSZUL7tt2HbNIFCNyi2E9IlqAKtd7NEJ0c6pk=",
+            radix::bytes_to_base64(
+                &cipher_text[..]
+            )
+        );
+
+        // Decrypt
+        let plain_text = aes128::cbc_decrypt(
+            key,
+            &[0; 16],
+            &cipher_text[..]
+        );
+
+        assert_eq!(
+            "YELLOW SUBMARINE",
+            std::str::from_utf8(&plain_text).unwrap()
+        );
+    }
 
     #[test]
     pub fn test_ecb_encrypt_then_decrypt() {
