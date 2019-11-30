@@ -14,7 +14,7 @@
 //! AES algorithm to decrypt/encrypt for every block that is fed to it. Nothing 
 //! fancy is done.
 //! 
-//! # CBC
+//! ## CBC
 //! 
 //! CBC is another mode of operation. It stands for Cipher Block Chaining.
 //! Contrary to ECB, CBC actually does stuff to the input apart from feeding it
@@ -24,12 +24,18 @@
 
 
 
-use openssl::symm;
+use openssl::{symm, rand};
 use std::convert::TryFrom;
 
 use crate::set01::challenge02;
 
 pub const BLOCK_SIZE: usize = 16;
+
+
+#[derive(Debug, PartialEq)]
+pub enum CipherMode {
+    ECB, CBC
+}
 
 //////////////////////
 /* CIPHER MODE: CBC */
@@ -317,6 +323,16 @@ pub fn decrypt_block(
 
     <[u8; BLOCK_SIZE]>::try_from(&plain_text_block[0..BLOCK_SIZE]).unwrap()
 }
+
+/// Generate a random 128-bit AES key
+pub fn get_random_key() -> [u8; 16] {
+    let mut buffer = [0 as u8; 16];
+
+    rand::rand_bytes(&mut buffer).unwrap();
+
+    buffer
+}
+
 
 #[cfg(test)]
 pub mod test {
