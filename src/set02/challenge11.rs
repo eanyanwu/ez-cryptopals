@@ -7,8 +7,13 @@
 //!
 //! Note: I cheated a little bit here. After some time of thinking and not 
 //! coming up with anything, I took a look at other solutions, which helped 
-//! me understand that I had mis-understood the challenge.
-//! I didn't realize I could come up with my own plain-text here.
+//! me understand that I had mis-understood the challenge.  
+//! I didn't realize I could come up with my own plain-text here.  
+//! I started the challenge thinking the point was to figure out what mode was
+//! being used when I have not access to the plain text. I think the point is
+//! actually to figure out how a given "encryptor" works from the outside. So
+//! for example, given a service that encrypts your data, what things can I do
+//! learn more about what encryption it is using.
 
 use crate::aes128;
 
@@ -78,24 +83,36 @@ pub fn cipher_text_oracle(msg: &[u8]) -> OracleResult
 /// The assumption here is that the padding we add before and after does not 
 /// ever equal all A's (it could, but it's a pretty low probability)
 pub fn detect_cipher_mode(cipher_text: &[u8]) -> aes128::CipherMode {
-    let mut chunks = cipher_text.chunks(16)
-                                .map(|bytes| {
-                                    u128::from_le_bytes(
-                                        <[u8; 16]>::try_from(bytes).unwrap()
-                                    )
-                                })
-                                .collect::<Vec<u128>>();
-
-    let len_before = chunks.len();
-    chunks.sort();
-    chunks.dedup();
-    let len_after = chunks.len();
-
-    if len_after == len_before {
+    
+    if any_identical_consecutive_blocks(16, cipher_text) {
+        aes128::CipherMode::ECB
+    }        
+    else {
         aes128::CipherMode::CBC
     }
-    else {
-        aes128::CipherMode::ECB
+}
+
+/// Returns `true` if there are any consecutive blocks of length `len` in the 
+/// message
+pub fn any_identical_consecutive_blocks(len: usize, msg: &[u8]) -> bool {
+    let chunks = msg.chunks(len).collect::<Vec<&[u8]>>();
+
+    let mut counter = 0;
+    loop {
+        if counter + 1 < chunks.len() {
+            let curr_chunk = chunks[counter];
+            let next_chunk = chunks[counter + 1];
+            
+            if curr_chunk == next_chunk {
+                break true
+            }
+            else {
+                counter += 1;
+            }
+        }
+        else {
+            break false
+        }
     }
 }
 
@@ -127,5 +144,40 @@ pub mod test {
     #[test]
     pub fn test_an_ecb_cbc_detection_oracle() {
         an_ecb_cbc_detection_oracle();
+    }
+
+    #[test]
+    pub fn test_any_identical_consecutive_blocks() {
+        let msg1 = b"0";
+        let msg2 = b"00";
+        let msg3 = b"0A0";
+
+        let msg4 = b"abcd0A0Aefjg";
+        let msg5 = b"0Abcd0A";
+        
+        // There is only one chunk of length 1
+        assert!(
+            !challenge11::any_identical_consecutive_blocks(1, msg1)
+        );
+
+        // There are two consecutive `0` characters
+        assert!(
+            challenge11::any_identical_consecutive_blocks(1, msg2)
+        );
+
+        // There are no consecutive identical characters
+        assert!(
+            !challenge11::any_identical_consecutive_blocks(1, msg3)
+        );
+        
+        // The blocks `0A` `0A` appear together
+        assert!(
+            challenge11::any_identical_consecutive_blocks(2, msg4)
+        );
+
+        // No consecutive blocks of length 2
+        assert!(
+            !challenge11::any_identical_consecutive_blocks(2, msg5)
+        );
     }
 }
