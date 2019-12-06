@@ -18,7 +18,6 @@
 use crate::aes128;
 
 use openssl::rand;
-use std::convert::TryFrom;
 
 pub struct OracleResult {
     cipher_text: Vec<u8>,

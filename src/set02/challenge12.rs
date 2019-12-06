@@ -1,9 +1,29 @@
 //! Byte-at-a-time ECB decryption (Simple)
 //!
+//! Toughest one yet x.x  
+//! The mantra for figuring this one is "Guessing at a block size boundary"  
+//! The two key ideas are (a) aes in ecb mode produces identical ciphertex
+//! given the same plain text and (b) iterating through all the values of a
+//! single byte is easy.  
+//! 
+//! We start by creating a buffer full of characters we come up with. For 
+//! simplicity, my buffer has only the character A. 
+//! 
+//! Next we create 256 buffers that are identical to our original buffer
+//! except for the last byte. Feed all those plain texts into
+//! the oracle and record what the result is for each one.
+//! 
+//! Next, we drop the last byte from our original buffer and feed that into the
+//! oracle. The result will be equal to one of the cipher texts we generated
+//! earlier by try the 256 plain texts. Additionally, the last byte of the 
+//! corresponding plain text will be the first byte of the message.
+//! 
+//! It does feel like this is a made up excercise. However I could see how the
+//! technique of "pulling" out a hidden message byte-by-byte could be helpful.
+//! 
 
 use crate::radix;
 use crate::aes128;
-
 
 pub fn cipher_text_oracle(key: &[u8; 16], msg: &[u8]) -> Vec<u8> 
 {
@@ -23,6 +43,33 @@ pub fn cipher_text_oracle(key: &[u8; 16], msg: &[u8]) -> Vec<u8>
     aes128::ecb_encrypt(&key, &padded_msg)
 }
 
+/// The process is as follows:
+/// 
+/// - Start with a plain text that is one-character long
+/// - Record the length of the ciphertext we get for that plain text
+/// - Repeatedly increase the size of the plain text by one, encrypt and compare
+/// the result to the original length
+/// - Do this until the length of the current cipher text is different from
+/// that of the original. The difference will be the block size.
+/// 
+/// Disclaimer: I previously used a different (and less precise) technique to
+/// detect the block size. However, after I solved this challenge, I could not
+/// help but check online for other solutions and found this much better one.
+pub fn detect_cipher_block_size() -> usize {
+    let key = [0; 16];
+    let mut plain_text = vec![b'A'];
+    let original_length = cipher_text_oracle(&key, &plain_text).len();
+    let mut current_length = original_length;
+
+    while current_length == original_length {
+        plain_text.push(b'A');
+        current_length = cipher_text_oracle(&key, &plain_text).len();
+    }
+
+
+    current_length - original_length
+}
+
 #[cfg(test)]
 pub mod test {
     use crate::aes128;
@@ -31,41 +78,22 @@ pub mod test {
 
     use std::collections::HashMap;
 
+    /// Solution to the challenge (see soource)
     pub fn byte_at_a_time_ecb_decryption() {
         let random_key = b"0123456789abcdef";
         
         // First discover the block size
-        let mut block_size = 0;
-
-        // I'll try ~ 50 block sizes
-        for i in 1..=50 {
-            // For each block I'll create a message that _should_ result in a 
-            // repeating block if my block size guess is correct
-            let my_msg = vec![b'A'; i * 2];
-
-            let cipher_text = challenge12::cipher_text_oracle(
-                random_key,
-                &my_msg
-            );
-
-            if challenge11::any_identical_consecutive_blocks(i, &cipher_text) 
-            {
-                block_size = i;
-                break;
-            }
-        }
+        let block_size = challenge12::detect_cipher_block_size();
 
         // we should have found a block size of 16
         assert_eq!(16, block_size);
 
         // Detect that the oracle is using ECB mode
-        let msg = vec![b'A'; block_size * 2];
-        let cipher_text = challenge12::cipher_text_oracle(
-            random_key,
-            &msg
-        );
-
-        let mode = challenge11::detect_cipher_mode(&cipher_text);
+        let mode = challenge11::detect_cipher_mode(
+            &challenge12::cipher_text_oracle(
+                random_key,
+                &vec![b'A'; block_size * 2]
+        ));
 
         assert_eq!(aes128::CipherMode::ECB, mode);
 
@@ -74,7 +102,10 @@ pub mod test {
         // Now for the magic trick..
 
         let mut secret_message = Vec::new();
-        let shifting_buffer_len = 128;
+
+        // I arrived at this number by trial-and-error.
+        // Nothing scholarly
+        let shifting_buffer_len = block_size * 8;
 
         for x in 1..=shifting_buffer_len {
             let mut brute_force_table = HashMap::new();
@@ -84,6 +115,8 @@ pub mod test {
             for _ in 0..shifted_input_len {
                 shifted_input.push(b'A');
             }
+
+            print!("{} ", shifted_input_len);
             
             // Prepare the brute-force table
             for i in 0..=255 {
@@ -115,11 +148,11 @@ pub mod test {
                 random_key,
                 &shifted_input
             );
+
             oracle_result.split_off(shifting_buffer_len);
 
             let mut plain_text = brute_force_table.remove(&oracle_result)
                                                     .unwrap();
-
             secret_message.push(plain_text.pop().unwrap());
         }
         
@@ -132,5 +165,9 @@ pub mod test {
     #[test]
     pub fn test_byte_at_a_time_ecb_decryption() {
         byte_at_a_time_ecb_decryption(); 
+    }
+
+    pub fn test_detect_cipher_block_size() {
+        assert_eq!(16, challenge12::detect_cipher_block_size());
     }
 }
