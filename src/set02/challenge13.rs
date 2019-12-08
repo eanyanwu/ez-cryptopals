@@ -1,5 +1,21 @@
 //! ECB cut-and-paste
 //! 
+//! Let's set the scene:  
+//! A user Alice wants to set up an account at code.com  
+//! The registration form, among other things, takes her email and sencds it 
+//! to a web service. This web service creates a json profile for Alice (think 
+//! a json web token), encrypts it, and sends the ciphertext back to Alice.  
+//! The idea is that this encrypted token can help the web service identify  
+//! Alice in subsequent requests.
+//! 
+//! But Alice is greedy. Alice wants to gain admin access to code.com.  
+//! Thankfully! The code for code.com is opensource, so alice knows the  
+//! structure of the json profile that is created. Gaining admin access is  
+//! as simple as somehow modifying her encrypted token in such a way that when  
+//! decypted, the "role" field says "admin"
+//! 
+//! Doing this when the AES cipher mode is ECB is actually very doable....  
+//! I demonstrate it below
 
 use crate::aes128;
 
@@ -86,70 +102,97 @@ pub mod test {
     
     /// Solution to the challenge (see source)
     pub fn ecb_cut_and_paste() {
-        // First step: M
+        //
+        // FIRST STEP:
         // Make a cipher text block that is an encryption of the text "admin"
 
-        let mut inject = String::from("");
+        // To do this, I need prefix the word 'admin' with some characters 
+        // in such a way that it starts at the begining fo the second block.
+        // To find how many characters are needed for the prefix, I repeatedly  
+        // increase its size until the block stops changing. 
+        let mut prefix = String::from("");
 
-        let profile = challenge13::profile_for(&inject);
-        let mut original_email_block = challenge13::encrypt(&profile);
+        let mut original_email_block = challenge13::encrypt(
+            &challenge13::profile_for(&prefix)
+        );
+
         original_email_block.split_off(16);
 
         let mut previous_email_block = original_email_block.clone();
         let mut current_email_block = Vec::new();
 
         while previous_email_block != current_email_block {
-            inject.push_str("A");
-            let profile = challenge13::profile_for(&inject);
+            prefix.push_str("A");
 
             previous_email_block = current_email_block.clone();
             
-            current_email_block = challenge13::encrypt(&profile);
+            current_email_block = challenge13::encrypt(
+                &challenge13::profile_for(&prefix)
+            );
+
             current_email_block.split_off(16);
         }
 
         // Adding the last character did not modify the block, nice
         // So we pop it off, because we now know that any subsequent characters
         // will start at the begining of the next block
-        inject.pop();
+        prefix.pop();
 
+        // Now that I have the correct prefix, I can create a block with the  
+        // characters 'admin' in it (plus padding to fill the block)
         let mut txt_to_inject = b"admin".to_vec();
         aes128::pkcs_pad(16, &mut txt_to_inject);
 
         let txt_to_inject = std::str::from_utf8(&txt_to_inject).unwrap();
 
-        inject.push_str(txt_to_inject);
+        prefix.push_str(txt_to_inject);
 
-        let malicious_profile = challenge13::profile_for(&inject);
-        let ciphertext = challenge13::encrypt(&malicious_profile);
+        let ciphertext = challenge13::encrypt(
+            &challenge13::profile_for(&prefix)
+        );
 
+        // Save this for later!
         let mut encrypted_admin_block = (&ciphertext[16..32]).to_vec();
 
+        //
+        // SECOND STEP:
+        // Create a ciphertext where the last block only contains
+        // the plain text "user"
 
-        // Second, create a ciphertext where the last block only contains
-        // the plain text "user" + padding
-        let mut inject = String::from("");
-        let profile = challenge13::profile_for(&inject);
-        let original_ciphertext_len = challenge13::encrypt(&profile).len();
+        // To do this, i need to figure out the length of a prefix that 
+        // will get me to hit the next block size boundary. I then add 
+        // 4 characters to that prefix so that the new block only has 
+        // the word "user"
+        let mut prefix = String::from("");
+
+        let original_ciphertext_len = challenge13::encrypt(
+            &challenge13::profile_for(&prefix)
+        ).len();
+
         let mut current_ciphertext_len = original_ciphertext_len;
 
         while original_ciphertext_len == current_ciphertext_len {
-            inject.push('A');
-            let profile = challenge13::profile_for(&inject);
-            current_ciphertext_len = challenge13::encrypt(&profile).len();
+            prefix.push('A');
+
+            current_ciphertext_len = challenge13::encrypt(
+                &challenge13::profile_for(&prefix)
+            ).len();
         }
 
-        let adminuser = String::from_utf8(
-            vec![b'A'; inject.len() + 4]
-        ).unwrap();
+        prefix.push_str("AAAA");
 
-        let adminprofile = challenge13::profile_for(&adminuser);
+        let mut ciphertext = challenge13::encrypt(
+            &challenge13::profile_for(&prefix)
+        );
 
-        let mut ciphertext = challenge13::encrypt(&adminprofile);
-
+        //
+        // THIRD STEP:
+        // Drop the last block that has the words "user" and replace it with  
+        // previously created block that had the words "admin"
         ciphertext.split_off(
             ciphertext.len() - 16
         );
+
 
         ciphertext.append(&mut encrypted_admin_block);
 
